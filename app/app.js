@@ -1,7 +1,8 @@
 import Application from '@ember/application';
 import Resolver from 'ember-resolver';
 import loadInitializers from 'ember-load-initializers';
-import config from 'audio-transcriber/config/environment';
+import config from 'aittendee/config/environment';
+import 'aittendee/app.css';
 
 export default class App extends Application {
   modulePrefix = config.modulePrefix;

@@ -2,7 +2,7 @@
 
 module.exports = function (environment) {
   const ENV = {
-    modulePrefix: 'audio-transcriber',
+    modulePrefix: 'aittendee',
     environment,
     rootURL: '/',
     locationType: 'history',
@@ -19,6 +19,8 @@ module.exports = function (environment) {
       // when it is created
     },
   };
+
+  ENV.OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
   if (environment === 'development') {
     // ENV.APP.LOG_RESOLVER = true;

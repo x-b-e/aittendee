@@ -1,5 +1,5 @@
 import EmberRouter from '@ember/routing/router';
-import config from 'audio-transcriber/config/environment';
+import config from 'aittendee/config/environment';
 
 export default class Router extends EmberRouter {
   location = config.locationType;
