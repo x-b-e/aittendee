@@ -9,12 +9,12 @@ export default class RecordingModel extends Model {
     Evented.apply(this);
   }
 
-  chunksPerIllustration = 3;
+  chunksPerIllustration = 6;
 
   @tracked
   lastChunkIllustrated = null;
 
-  chunksPerChapter = 3;
+  chunksPerChapter = 6;
 
   @hasMany('recording-chunk', { async: false })
   chunks;
@@ -24,6 +24,9 @@ export default class RecordingModel extends Model {
 
   @hasMany('illustrator', { async: false })
   illustrators;
+
+  @hasMany('marketer', { async: false })
+  marketers;
 
   @hasMany('recording-chapter', { async: false })
   chapters;
@@ -100,6 +103,9 @@ export default class RecordingModel extends Model {
         costs.push(term.cost);
       }
     }
+    for (let marketer of this.marketers.toArray()) {
+      costs.push(marketer.cost);
+    }
     return costs.reduce((sum, cost) => sum + cost, 0);
   }
 
@@ -118,7 +124,7 @@ export default class RecordingModel extends Model {
       blob,
       createdAt: new Date(),
     });
-    chunk.on('transcribed', this.didTranscribeChunk);
+    chunk.on('transcribed', this, this.didTranscribeChunk);
   }
 
   @action
@@ -142,12 +148,31 @@ export default class RecordingModel extends Model {
   }
 
   @action
-  didSummarizeChapter() {
+  didSummarizeChapter(chapter) {
+    this.createSummary();
+    this.createPullQuotes(chapter);
+  }
+
+  @action
+  createSummary() {
     const summary = this.store.createRecord('recording-summary', {
       createdAt: new Date(),
       recording: this,
     });
     summary.summarizeTask.perform();
+  }
+
+  createMarketer() {
+    this.store.createRecord('marketer', {
+      recording: this,
+    });
+  }
+
+  @action
+  createPullQuotes(chapter) {
+    for (let marketer of this.marketers) {
+      marketer.createPullQuoteTask.perform(chapter);
+    }
   }
 
   @action
@@ -164,7 +189,7 @@ export default class RecordingModel extends Model {
       lastChapter = this.createChapter();
     }
 
-    lastChapter.chunks = [...lastChapter.chunks, chunk];
+    chunk.chapter = lastChapter;
 
     if (lastChapter.chunks.length >= chunksPerChapter) {
       lastChapter.summarizeTask.perform();

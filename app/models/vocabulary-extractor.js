@@ -48,10 +48,32 @@ It is fine if you don't extract any terms if you think the transcript is underst
           terms: {
             type: 'array',
             items: {
-              type: 'string',
+              type: 'object',
+              properties: {
+                term: {
+                  type: 'string',
+                },
+                newnessPct: {
+                  type: 'integer',
+                  description:
+                    'The probability % (0 to 100) that the term is not known by the given audience.',
+                },
+                valuePct: {
+                  type: 'integer',
+                  description:
+                    'The probability % (0 to 100) that the term is worth knowing by the audience.',
+                },
+                definablePct: {
+                  type: 'integer',
+                  description:
+                    'The probability % (0 to 100) that you are able to define the word accurately.',
+                },
+              },
+              required: ['term', 'newnessPct', 'valuePct', 'knownPct'],
             },
           },
         },
+        required: ['terms'],
       },
     };
     functions.push(extractTerms);
@@ -91,6 +113,12 @@ It is fine if you don't extract any terms if you think the transcript is underst
             json['choices'][0]['message']['function_call']['arguments']
           );
           const terms = functionArguments['terms'];
+          console.log({ terms });
+          const highValueTerms = terms.filter((t) => {
+            return (
+              t.newnessPct >= 70 && t.definablePct >= 70 && t.valuePct >= 70
+            );
+          });
 
           const previousTerms = this.terms.map((t) => t.term);
           const fuse = new Fuse(previousTerms, {
@@ -100,8 +128,8 @@ It is fine if you don't extract any terms if you think the transcript is underst
             threshold: 0.6,
           });
 
-          for (let term of terms) {
-            const results = fuse.search(term);
+          for (let term of highValueTerms) {
+            const results = fuse.search(term.term);
             if (results.length > 0) {
               for (let result of results) {
                 const matchedTerm = result.value;
@@ -113,12 +141,16 @@ It is fine if you don't extract any terms if you think the transcript is underst
                 }
               }
             } else {
-              this.store.createRecord('vocabulary-extractor-term', {
-                vocabularyExtractor: this,
-                recordingChunk: chunk,
-                term,
-                count: 1,
-              });
+              const newTerm = this.store.createRecord(
+                'vocabulary-extractor-term',
+                {
+                  vocabularyExtractor: this,
+                  recordingChunk: chunk,
+                  term: term.term,
+                  count: 1,
+                }
+              );
+              newTerm.defineTask.perform();
             }
           }
           break;

@@ -37,7 +37,12 @@ export default class RecordingSummaryModel extends Model {
       role: 'system',
       content: `You are an assistant that is creating a Axios-like "Smart Brevity"-style summary for the following audience:
 
-${this.audience}`,
+"""
+${this.audience}
+"""
+
+The summary should include a title and formatting and should be written in Markdown.
+`,
     };
     messages.push(systemMessage);
 
@@ -48,30 +53,9 @@ ${this.chaptersSummary}`,
     };
     messages.push(userMessage);
 
-    const functions = [
-      {
-        name: 'summary',
-        description:
-          'Summarize the transcript in Axios-like "Smart Brevity" style.',
-        parameters: {
-          type: 'object',
-          properties: {
-            summary: {
-              type: 'string',
-              description: 'The summary of the transcript in Markdown.',
-            },
-          },
-        },
-      },
-    ];
-
     const data = {
       model: 'gpt-4-0613',
       messages,
-      functions,
-      function_call: {
-        name: 'summary',
-      },
     };
 
     let tries = 3;
@@ -90,13 +74,11 @@ ${this.chaptersSummary}`,
           `HTTP Error Response: ${response.status} ${response.statusText}`
         );
       } else {
+        let json;
         try {
-          let json = yield response.json();
+          json = yield response.json();
           this.cost += calculatChatCost(json);
-          const functionArguments = JSON.parse(
-            json['choices'][0]['message']['function_call']['arguments']
-          );
-          const summary = functionArguments['summary'];
+          const summary = json['choices'][0]['message']['content'];
           this.summary = summary;
           break;
         } catch (e) {

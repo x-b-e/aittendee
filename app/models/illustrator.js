@@ -46,7 +46,8 @@ ${this.transcript}
     const functions = [];
     const promptFunction = {
       name: 'prompt',
-      description: 'Create a short 10 word prompt for an illustrator. Include the style and pleasing color pallette that matches the content.',
+      description:
+        'Create a short 10 word prompt for an illustrator. Include the style and pleasing color pallette that matches the content.',
       parameters: {
         type: 'object',
         properties: {
@@ -56,7 +57,7 @@ ${this.transcript}
           },
           name: {
             type: 'string',
-            description: `A one to three word name for the illustration.`,
+            description: `A one to three word poetic name for the illustration.`,
           },
         },
       },

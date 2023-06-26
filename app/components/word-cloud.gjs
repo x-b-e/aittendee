@@ -14,10 +14,10 @@ export default class WordCloud extends Component {
     if (!data) return;
     const words = data.map((d) => ({ text: d.term, size: d.count }));
     const maxCount = Math.max(...words.map((d) => d.size));
-    const fontSizeScale = scaleLinear().domain([0, maxCount]).range([14, 36]);
+    const fontSizeScale = scaleLinear().domain([0, maxCount]).range([14, 20]);
 
     const layout = cloud()
-      .size([500, 500])
+      .size([element.clientWidth, element.clientHeight])
       .words(words)
       .padding(5)
       .rotate(() => (~~(Math.random() * 6) - 3) * 30)
@@ -28,15 +28,16 @@ export default class WordCloud extends Component {
 
     function draw(words) {
       D3.select(element)
-        .append("svg")
-        .attr("width", layout.size()[0])
-        .attr("height", layout.size()[1])
-        .append("g")
-        .attr("transform", "translate(" + layout.size()[0] / 2 + "," + layout.size()[1] / 2 + ")")
-        .selectAll("text")
+        .append('svg')
+        .attr('width', '100%')
+        .attr('height', '100%')
+        .attr('class', 'absolute inset-0')
+        .append('g')
+        .attr('transform', 'translate(' + layout.size()[0] / 2 + ',' + layout.size()[1] / 2 + ')')
+        .selectAll('text')
         .data(words)
-        .enter().append("text")
-        .style("font-size", (d) => d.size + "px")
+        .enter().append('text')
+        .style('font-size', (d) => d.size + "px")
         .style("fill", "#000")
         .attr("text-anchor", "middle")
         .attr("transform", (d) => "translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")")
@@ -46,9 +47,10 @@ export default class WordCloud extends Component {
 
   <template>
     <div
-      class="bg-blue-200"
+      class="relative w-full aspect-square bg-gray-100 border-4 border-gray-200 rounded-lg"
       {{didInsert this.createWordCloud}}
       {{didUpdate this.createWordCloud @terms}}
+      ...attributes
     >
     </div>
   </template>

@@ -22,12 +22,14 @@ export default class VocabularyExtractorTermModel extends Model {
 
   set term(value) {
     this._term = value;
-    this.defineTask.perform();
   }
 
   get term() {
     return this._term;
   }
+
+  @attr('number')
+  utilityPct;
 
   @attr('string')
   definition;

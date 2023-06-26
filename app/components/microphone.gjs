@@ -8,53 +8,14 @@ import didInsert from '@ember/render-modifiers/modifiers/did-insert';
 import gt from 'ember-truth-helpers/helpers/gt';
 import WordCloud from 'aittendee/components/word-cloud';
 import Markdown from 'aittendee/components/markdown';
+import { task, timeout } from 'ember-concurrency';
 
 function formatCost(cost, precision = 2) {
   return `$${cost.toFixed(precision)}`;
 }
 
-class Term extends Component {
-  @tracked
-  isVisible = true;
-
-  constructor() {
-    super(...arguments);
-    this.startTimer();
-  }
-
-  @action
-  startTimer() {
-    const { term } = this.args;
-    if (term.definition) {
-      later(this, this.hideTerm, 10 * 1000)
-    }
-  }
-
-  @action
-  hideTerm() {
-    this.isVisible = false;
-  }
-
-  <template>
-    {{#if this.isVisible}}
-      <li>
-        <span class="font-bold">{{@term.term}}</span>:
-        {{#if @term.definition}}
-          <span
-            {{didInsert this.startTimer}}
-          >
-            {{@term.definition}}
-          </span>
-        {{else if @term.defineTask.isRunning}}
-          Defining...
-        {{else}}
-          <span class="italic text-grey-400">
-            Not found
-          </span>
-        {{/if}}
-      </li>
-    {{/if}}
-  </template>
+function formatSecondsAsMinutes(seconds, precision = 1) {
+  return `${(seconds / 60).toFixed(precision)}`;
 }
 
 class AudioPlayer extends Component {
@@ -78,6 +39,11 @@ class AudioPlayer extends Component {
 }
 
 export default class Microphone extends Component {
+  constructor() {
+    super(...arguments);
+    this.setRandomQuote.perform();
+  }
+
   @tracked
   isOn = false;
 
@@ -89,6 +55,9 @@ export default class Microphone extends Component {
 
   @tracked
   vocabularyExtractor;
+
+  @tracked
+  randomPullQuote;
 
   @tracked
   blobs = [];
@@ -109,6 +78,7 @@ export default class Microphone extends Component {
       this.vocabularyExtractor = this.store.createRecord('vocabulary-extractor', {
         recording: this.recording,
       });
+      this.recording.createMarketer();
       const createChunk = (blob) => {
         this.recording.createChunk({ blob });
       }
@@ -133,6 +103,23 @@ export default class Microphone extends Component {
     return lastIllustration;
   }
 
+  @task
+  *setRandomQuote() {
+    while (true) {
+      const { recording } = this;
+      const pullQuotes = [];
+      if (recording) {
+        for (const marketer of recording.marketers) {
+          for (const pullQuote of marketer.pullQuotes) {
+            pullQuotes.push(pullQuote);
+          }
+        }
+      }
+      this.randomPullQuote = pullQuotes[Math.floor(Math.random() * pullQuotes.length)];
+      yield timeout(1000 * 10);
+    }
+  }
+
   <template>
     <div class="">
       <div class="grid grid-cols-3">
@@ -140,6 +127,9 @@ export default class Microphone extends Component {
           <div>
             {{#if (gt this.recording.wordsPerMinute 0)}}
               {{this.recording.wordsPerMinute}} WPM
+              <span class="text-xs">
+                after {{formatSecondsAsMinutes this.recording.durationSeconds}} minutes
+              </span>
             {{/if}}
           </div>
           <div>
@@ -172,56 +162,42 @@ export default class Microphone extends Component {
         </div>
       </div>
 
+      {{#if this.randomPullQuote}}
+        <div>
+          <blockquote class="text-center text-xl font-semibold leading-8 text-gray-900 sm:text-2xl sm:leading-9 max-w-prose mx-auto my-8">
+            “{{this.randomPullQuote.quote}}”
+          </blockquote>
+        </div>
+      {{/if}}
+
       <div class="flex my-4">
         <div class="flex-1 max-w-prose mx-auto prose-sm">
-          <h3>Terms That Might Be New To You</h3>
-          <p>
-            The following terms were mentioned in this speech and might be new to you. They're being extracted and defined in real time.
-          </p>
-          <ul class="">
-            {{#each this.vocabularyExtractor.terms as |term|}}
-              <Term @term={{term}} />
-            {{/each}}
-          </ul>
-
-          <h3>Word Cloud</h3>
-          <WordCloud @terms={{this.vocabularyExtractor.terms}} />
-
-          <h3>Summary</h3>
           <div class="">
             {{#if this.recording.lastSummary}}
               <Markdown @markdown={{this.recording.lastSummary.summary}} />
             {{else}}
-              Waiting to write summary.
+              <div class="text-lg text-gray-500">
+                Waiting to write summary.
+              </div>
             {{/if}}
           </div>
-
-          <h3>Chapter Summaries</h3>
-          <ul>
-            {{#each this.recording.chapters as |chapter|}}
-              <li>
-                {{#if chapter.summary}}
-                  <Markdown @markdown={{chapter.summary}} />
-                {{else if chapter.summarizeTask.isRunning}}
-                  Summarizing...
-                {{else}}
-                  No summary
-                {{/if}}
-              </li>
-            {{/each}}
-          </ul>
         </div>
         <div class="flex-none">
-          <div class="w-72">
-            {{#if this.lastIllustration}}
-              <div class="text-sm font-bold mb-1">
-                {{this.lastIllustration.name}}
-              </div>
-              <img
-                src={{this.lastIllustration.url}}
-                class="w-full"
-              />
-            {{/if}}
+          <div class="flex flex-col space-y-2 w-72">
+            <div>
+              <WordCloud @terms={{this.vocabularyExtractor.terms}} />
+            </div>
+            <div>
+              {{#if this.lastIllustration}}
+                <div class="text-sm font-bold mb-1">
+                  {{this.lastIllustration.name}}
+                </div>
+                <img
+                  src={{this.lastIllustration.url}}
+                  class=""
+                />
+              {{/if}}
+            </div>
           </div>
         </div>
       </div>

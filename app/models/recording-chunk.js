@@ -20,6 +20,9 @@ export default class RecordingChunkModel extends Model {
   @attr('number')
   durationSeconds;
 
+  @belongsTo('recording-chapter', { async: false })
+  chapter;
+
   get cost() {
     const { durationSeconds } = this;
     if (!durationSeconds) return 0;

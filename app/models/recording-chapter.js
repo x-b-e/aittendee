@@ -31,7 +31,6 @@ export default class RecordingChapterModel extends Model {
 
   set summary(value) {
     this._summary = value;
-    this.trigger('summarized');
   }
 
   get summary() {
@@ -72,31 +71,9 @@ ${this.transcript}`,
 
     messages.push(userMessage);
 
-    const functions = [];
-
-    const summaryFunction = {
-      name: 'summary',
-      description: 'Create a bullet point summary.',
-      parameters: {
-        type: 'object',
-        properties: {
-          summary: {
-            type: 'string',
-            description: 'The bullet point summary in markdown.',
-          },
-        },
-      },
-    };
-
-    functions.push(summaryFunction);
-
     const data = {
       model: 'gpt-4-0613',
       messages,
-      functions,
-      function_call: {
-        name: 'summary',
-      },
     };
 
     let tries = 3;
@@ -118,11 +95,9 @@ ${this.transcript}`,
         try {
           let json = yield response.json();
           this.cost += calculatChatCost(json);
-          const functionArguments = JSON.parse(
-            json['choices'][0]['message']['function_call']['arguments']
-          );
-          const summary = functionArguments['summary'];
+          const summary = json['choices'][0]['message']['content'];
           this.summary = summary;
+          this.trigger('summarized', this);
           break;
         } catch (e) {
           console.error(e);
