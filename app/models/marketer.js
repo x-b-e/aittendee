@@ -12,7 +12,7 @@ ${audience}
 """
 
 The pull quote must come from the provided content and be no more than 1 sentence long.
-Edit pull quotes to remove fix grammatical issues, remove filler words, and maximize the impact.
+Edit pull quotes to remove fix grammatical issues, remove filler words, ensure clarity, and maximize the impact.
 You will score all pull requests on a scale of 0 - 100 where 0 is not interesting and 100 is very interesting.
 Only really interesting pull quotes should be giving a score of greater than 70.
   `.trim();
@@ -74,7 +74,7 @@ export default class MarketerModel extends Model {
                   description: `
 The text of the pull quote.
 It must be no more than 1 sentence long.
-Edit pull quotes to remove fix grammatical issues, remove filler words, and maximize the impact.
+Edit pull quotes to remove fix grammatical issues, remove filler words, ensure clarity, and maximize the impact.
                   `.trim(),
                 },
                 score: {

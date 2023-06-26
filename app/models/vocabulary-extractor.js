@@ -113,7 +113,6 @@ It is fine if you don't extract any terms if you think the transcript is underst
             json['choices'][0]['message']['function_call']['arguments']
           );
           const terms = functionArguments['terms'];
-          console.log({ terms });
           const highValueTerms = terms.filter((t) => {
             return (
               t.newnessPct >= 70 && t.definablePct >= 70 && t.valuePct >= 70
