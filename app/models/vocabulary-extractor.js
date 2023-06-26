@@ -28,7 +28,7 @@ export default class VocabularyExtractorModel extends Model {
 
 ${this.audience}
 
-It is fine if you don't extract any terms if you think the transcript is understandable by the given audience. Only extract terms that you know the meaning of confidently.`,
+It is fine if you don't extract any terms if you think the transcript is understandable by the given audience. Only extract terms that you know the meaning of confidently. The term must be included in the transcript.`,
     };
     messages.push(systemMessage);
     const userMessage = {
@@ -52,6 +52,8 @@ It is fine if you don't extract any terms if you think the transcript is underst
               properties: {
                 term: {
                   type: 'string',
+                  description:
+                    'Extracts key unkonwn vocabulary terms from a transcript that are probably not understood by the given audience. Do not include terms that are probably understood by the given audience. The term should only be capitalized if it is a proper noun. Do not include any punctuation.',
                 },
                 newnessPct: {
                   type: 'integer',
