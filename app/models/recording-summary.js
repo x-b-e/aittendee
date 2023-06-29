@@ -1,9 +1,15 @@
 import Model, { belongsTo, attr } from '@ember-data/model';
 import { task } from 'ember-concurrency';
 import ENV from 'aittendee/config/environment';
-import calculatChatCost from 'aittendee/utilities/calculate-chat-cost';
+import calculateChatCost from 'aittendee/utilities/calculate-chat-cost';
+import Evented from '@ember/object/evented';
 
 export default class RecordingSummaryModel extends Model {
+  constructor() {
+    super(...arguments);
+    Evented.apply(this);
+  }
+
   @attr('date')
   createdAt;
 
@@ -54,7 +60,7 @@ ${this.chaptersSummary}`,
     messages.push(userMessage);
 
     const data = {
-      model: 'gpt-4-0613',
+      model: 'gpt-4',
       messages,
     };
 
@@ -77,9 +83,10 @@ ${this.chaptersSummary}`,
         let json;
         try {
           json = yield response.json();
-          this.cost += calculatChatCost(json);
+          this.cost += calculateChatCost(json);
           const summary = json['choices'][0]['message']['content'];
           this.summary = summary;
+          this.trigger('summarized', this);
           break;
         } catch (e) {
           console.error(e);

@@ -26,6 +26,31 @@ export default class RecordingChapterModel extends Model {
   @hasMany('recording-chunk', { async: false })
   chunks;
 
+  @hasMany('sentiment-estimate', { async: false })
+  sentimentEstimates;
+
+  get polarity() {
+    const { sentimentEstimates } = this;
+    if (sentimentEstimates.length === 0) return null;
+
+    const polaritySum = sentimentEstimates.reduce((sum, estimate) => {
+      return sum + estimate.polarity;
+    }, 0);
+
+    return polaritySum / sentimentEstimates.length;
+  }
+
+  get subjectivity() {
+    const { sentimentEstimates } = this;
+    if (sentimentEstimates.length === 0) return null;
+
+    const subjectivitySum = sentimentEstimates.reduce((sum, estimate) => {
+      return sum + estimate.subjectivity;
+    }, 0);
+
+    return subjectivitySum / sentimentEstimates.length;
+  }
+
   @attr('string')
   _summary;
 

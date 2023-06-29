@@ -145,6 +145,7 @@ It is fine if you don't extract any terms if you think the transcript is underst
               const newTerm = this.store.createRecord(
                 'vocabulary-extractor-term',
                 {
+                  createdAt: new Date(),
                   vocabularyExtractor: this,
                   recordingChunk: chunk,
                   term: term.term,

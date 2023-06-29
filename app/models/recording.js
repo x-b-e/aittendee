@@ -34,6 +34,12 @@ export default class RecordingModel extends Model {
   @hasMany('recording-summary', { async: false })
   summaries;
 
+  @hasMany('attendee', { async: false })
+  attendees;
+
+  @hasMany('sentiment-estimator', { async: false })
+  sentimentEstimators;
+
   @attr('string')
   audience;
 
@@ -106,7 +112,68 @@ export default class RecordingModel extends Model {
     for (let marketer of this.marketers.toArray()) {
       costs.push(marketer.cost);
     }
+    for (let attendee of this.attendees.toArray()) {
+      costs.push(attendee.cost);
+    }
     return costs.reduce((sum, cost) => sum + cost, 0);
+  }
+
+  get pullQuotes() {
+    const { marketers } = this;
+    const result = [];
+    if (!marketers) return result;
+
+    for (let marketer of marketers.toArray()) {
+      result.push(...marketer.pullQuotes.toArray());
+    }
+    result.sort((a, b) => {
+      return a.createdAt - b.createdAt;
+    });
+
+    return result;
+  }
+
+  get vocabularyTerms() {
+    const { vocabularyExtractors } = this;
+    const result = [];
+    if (!vocabularyExtractors) return result;
+
+    for (let extractor of vocabularyExtractors.toArray()) {
+      result.push(...extractor.terms.toArray());
+    }
+    result.sort((a, b) => {
+      return a.createdAt - b.createdAt;
+    });
+
+    return result;
+  }
+
+  get chaptersWithSentimentEstimates() {
+    return this.chapters.filter((chapter) => {
+      return chapter.sentimentEstimates.length > 0;
+    });
+  }
+
+  get polarity() {
+    const { chaptersWithSentimentEstimates } = this;
+    if (chaptersWithSentimentEstimates.length === 0) return null;
+
+    return (
+      chaptersWithSentimentEstimates.reduce((sum, chapter) => {
+        return sum + chapter.polarity;
+      }, 0) / chaptersWithSentimentEstimates.length
+    );
+  }
+
+  get subjectivity() {
+    const { chaptersWithSentimentEstimates } = this;
+    if (chaptersWithSentimentEstimates.length === 0) return null;
+
+    return (
+      chaptersWithSentimentEstimates.reduce((sum, chapter) => {
+        return sum + chapter.subjectivity;
+      }, 0) / chaptersWithSentimentEstimates.length
+    );
   }
 
   get costPerHour() {
@@ -151,6 +218,14 @@ export default class RecordingModel extends Model {
   didSummarizeChapter(chapter) {
     this.createSummary();
     this.createPullQuotes(chapter);
+    this.estimateSentiment(chapter);
+  }
+
+  @action
+  didCreateSummary(summary) {
+    for (let attendee of this.attendees) {
+      attendee.askQuestionTask.perform(summary);
+    }
   }
 
   @action
@@ -159,6 +234,7 @@ export default class RecordingModel extends Model {
       createdAt: new Date(),
       recording: this,
     });
+    summary.on('summarized', this.didCreateSummary);
     summary.summarizeTask.perform();
   }
 
@@ -172,6 +248,13 @@ export default class RecordingModel extends Model {
   createPullQuotes(chapter) {
     for (let marketer of this.marketers) {
       marketer.createPullQuoteTask.perform(chapter);
+    }
+  }
+
+  @action
+  estimateSentiment(chapter) {
+    for (let estimator of this.sentimentEstimators) {
+      estimator.estimateSentimentTask.perform(chapter);
     }
   }
 
