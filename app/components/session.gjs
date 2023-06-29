@@ -480,7 +480,7 @@ She's pretty practical and mostly focused on the financial here-and-now, but is 
         </div>
       </div>
 
-      <div class="flex-grow h-full p-4">
+      <div class="flex-1 h-full p-4 overflow-y-hidden">
         <div class="flex h-full">
           <div class="flex-1 h-full pr-4">
             <Summary @recording={{this.recording}} class="h-full" />
