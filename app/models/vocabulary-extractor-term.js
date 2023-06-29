@@ -5,6 +5,9 @@ import fetch from 'fetch';
 import calculatChatCost from 'aittendee/utilities/calculate-chat-cost';
 
 export default class VocabularyExtractorTermModel extends Model {
+  @attr('date')
+  createdAt;
+
   @belongsTo('vocabulary-extractor', { async: false })
   vocabularyExtractor;
 

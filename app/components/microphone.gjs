@@ -79,12 +79,45 @@ export default class Microphone extends Component {
         recording: this.recording,
       });
       this.recording.createMarketer();
+
+      this.addAttendees();
+
       const createChunk = (blob) => {
         this.recording.createChunk({ blob });
       }
       this.audio.startRecording({ onDataAvailable: createChunk });
     } else {
       this.audio.stopRecording();
+    }
+  }
+
+  @action
+  addAttendees() {
+    const { recording } = this;
+    const attributesList = [
+      {
+        name: 'Julie Bowen',
+        voiceName: 'en-US-Neural2-F',
+        profile: `
+Julie Bowen (no relation to Matt and Trey Bowen of Superior Bowen) is a seasoned executive leader and financial professional based in the Kansas City Metropolitan Area. With a rich professional background, she possesses a unique combination of expertise in finance, accounting, auditing, and executive leadership, making her a versatile addition to any organization. Julie's robust academic foundation includes a Bachelor of Science in Business Administration, with concentrations in Accounting and Economics, and a Masters of Accountancy from Kansas State University. She's also a Certified Public Accountant (CPA) in both Kansas and Missouri and holds Series 66, 7, and 63 Securities Licenses.
+
+Julie began her career in auditing as an Audit Senior Associate at KPMG, one of the Big Four accounting organizations. She then advanced into a role with Ferrell Capital, Inc., where she juggled three concurrent positions—Controller for Ferrell Capital, Chief Compliance Officer, and Investment Analyst for Samson Capital Management. In these roles, she showcased her ability to manage a diverse portfolio of responsibilities, from real estate management to the creation of robust compliance programs.
+
+Following her tenure at Ferrell Capital, Inc., Julie assumed the role of Chief Financial Officer (CFO) at Tanner & White Properties, Inc. and its affiliated entities, including Woodside Health & Tennis Club. Here, she demonstrated her financial acumen in real estate development and operations, from securing financing for significant projects to implementing rigorous budgeting and forecasting processes.
+
+In recent years, Julie has served as CFO for Samson Dental Partners, Bright Tiger Dental, and currently Legacy Infrastructure Group. At Samson Dental Partners, she orchestrated a strategic business shutdown while transitioning to Bright Tiger Dental. As CEO of Bright Tiger Dental, she led a substantial organizational change that resulted in 55% revenue growth in 11 months. Currently, as CFO at Legacy Infrastructure Group (owner of Superior Bowen and Haskell Lemon), she continues to leverage her expertise to guide the company's financial and operational leadership.
+
+Overall, Julie exhibits the qualities of an adaptable, resilient leader. She is not only a problem solver but also an agent of change who thrives in dynamic, challenging environments. Her ability to construct and guide teams around common goals, coupled with her knack for building robust financial and operational structures, has consistently driven her organizations to success. She is known for her agility in the face of change, unwavering sense of urgency, and her commitment to the human side of business. She takes pride in building strong, committed teams and fostering workplace cultures where they can thrive.
+
+On the personal side, Julie is a married mom of 2 elementary school age boys. She wears baseball hats on the weekend, but no golf shirts. She's actually quite stylish but does not identify as such. She's fit, but her Peloton output could be much higher. She's a fun extrovert that everyone loves to be around. She's a determined learner that figures out new things through steady commitment and smarts. She's got "it" whether or not she thinks so.
+
+She's pretty practical and mostly focused on the financial here-and-now, but is up for conversation about just about anything regardless.
+        `.trim(),
+      }
+    ];
+
+    for (let attributes of attributesList) {
+      this.store.createRecord('attendee', { recording, ...attributes });
     }
   }
 
@@ -197,6 +230,34 @@ export default class Microphone extends Component {
                   class=""
                 />
               {{/if}}
+            </div>
+            <div>
+              <div class="text-sm font-bold mb-1">
+                Questions
+              </div>
+              {{#each this.recording.attendees as |attendee|}}
+                {{#if (gt attendee.questions.length 0)}}
+                  <div>
+                    <div class="text-sm font-bold mb-1">
+                      {{attendee.name}}
+                    </div>
+                    <div class="text-xs">
+                      <ul class="list-disc">
+                        {{#each attendee.questions as |question|}}
+                          <li>
+                            {{question.question}}
+                            {{#if question.audioUrl}}
+                              <div>
+                                <audio controls src={{question.audioUrl}}></audio>
+                              </div>
+                            {{/if}}
+                          </li>
+                        {{/each}}
+                      </ul>
+                    </div>
+                  </div>
+                {{/if}}
+              {{/each}}
             </div>
           </div>
         </div>

@@ -21,6 +21,7 @@ module.exports = function (environment) {
   };
 
   ENV.OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+  ENV.GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
 
   if (environment === 'development') {
     // ENV.APP.LOG_RESOLVER = true;

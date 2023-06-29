@@ -130,6 +130,7 @@ Edit pull quotes to remove fix grammatical issues, remove filler words, ensure c
           for (let quote of quotes) {
             if (quote.score >= 50) {
               this.store.createRecord('marketer-pull-quote', {
+                createdAt: new Date(),
                 marketer: this,
                 quote: quote.text,
                 score: quote.score,
