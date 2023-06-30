@@ -12,6 +12,10 @@ import { task, timeout } from 'ember-concurrency';
 import divide from 'ember-math-helpers/helpers/div';
 import perform from 'ember-concurrency/helpers/perform';
 import { next } from '@ember/runloop';
+import { fn } from '@ember/helper';
+import eq from 'ember-truth-helpers/helpers/eq';
+import and from 'ember-truth-helpers/helpers/and';
+import not from 'ember-truth-helpers/helpers/not';
 
 const images = [];
 for (let i = 1; i <= 12; i++) {
@@ -47,6 +51,279 @@ class TopBanner extends Component {
           Kansas City
         </a>
       </p>
+    </div>
+  </template>
+}
+
+function getLightestRow(imageData, padding) {
+  return new Promise((resolve, reject) => {
+    let img = new Image();
+    img.onload = function () {
+      let canvas = document.createElement('canvas');
+      let ctx = canvas.getContext('2d');
+
+      canvas.width = this.width;
+      canvas.height = this.height;
+
+      ctx.drawImage(this, 0, 0, this.width, this.height);
+
+      let maxBrightness = 0;
+      let maxBrightnessRowIndex = padding;
+
+      for (let y = padding; y < this.height - padding; y += 5) {
+        let rowBrightness = 0;
+        let count = 0;  // keep track of how many pixels we've checked
+
+        // Only check every 5th pixel along the row
+        for (let x = 0; x < this.width; x += 5) {
+          let pixelData = ctx.getImageData(x, y, 1, 1).data;
+
+          // Calculate brightness
+          let pixelBrightness = (pixelData[0] + pixelData[1] + pixelData[2]) / 3;
+
+          rowBrightness += pixelBrightness;
+          count++;
+        }
+
+        let averageRowBrightness = rowBrightness / count;  // divide by the number of pixels checked
+
+        if (averageRowBrightness > maxBrightness) {
+          maxBrightness = averageRowBrightness;
+          maxBrightnessRowIndex = y;
+        }
+      }
+
+      // Convert row index to percentage
+      let percentage = (maxBrightnessRowIndex / this.height) * 100;
+
+      resolve(percentage);
+    };
+
+    img.onerror = function () {
+      reject('Failed to load image');
+    };
+
+    img.src = imageData;
+  });
+}
+
+class Illustrations extends Component {
+  constructor() {
+    super(...arguments);
+    next(() => {
+      this.pollForNextTask.perform();
+    });
+  }
+
+  get illustrations() {
+    const { recording } = this.args;
+    if (!recording) return [];
+
+    return recording.illustrations;
+  }
+
+  @tracked
+  selectedIllustration;
+
+  get lightestRowPct() {
+    const { selectedIllustration } = this;
+    if (!selectedIllustration) return null;
+    return selectedIllustration.lightestRowPct;
+  }
+
+  get selectedIllustrationUrl() {
+    const { selectedIllustration } = this;
+    if (!selectedIllustration) return '/images/illustration-default.png';
+    return selectedIllustration.url;
+  }
+
+  get selectedIllustrationName() {
+    const { selectedIllustration } = this;
+    if (!selectedIllustration) return 'Selected Images';
+    return selectedIllustration.name;
+  }
+
+  get selectedIllustrationReasoning() {
+    const { selectedIllustration } = this;
+    if (!selectedIllustration) return null;
+    return selectedIllustration.reasoning;
+  }
+
+  @task
+  *pollForNextTask() {
+    while (true) {
+      yield this.setNextTask.perform();
+      yield timeout(10 * 1000);
+    }
+  }
+
+  @task
+  *setNextTask() {
+    const { illustrations } = this;
+    const { selectedIllustration } = this;
+
+    if (!selectedIllustration) {
+      if (illustrations.length === 0) {
+        this.selectedIllustration = {
+          url: '/images/illustration-default.png',
+        };
+      } else {
+        this.selectedIllustration = illustrations[0];
+      }
+    } else {
+      const index = illustrations.indexOf(selectedIllustration);
+      if (index === illustrations.length - 1) {
+        this.selectedIllustration = illustrations[0];
+      } else {
+        this.selectedIllustration = illustrations[index + 1];
+      }
+    }
+  }
+
+  <template>
+    <div class="static">
+      <button
+        type="button"
+        class="aspect-square relative w-full"
+        {{on "click" (perform this.setNextTask)}}
+      >
+        <img src={{this.selectedIllustrationUrl}} class="absolute inset-0" />
+        {{#if this.lightestRowPct}}
+          <div class="absolute inset-x-0 p-6 font-permanent-marker text-2xl text-center" style="top: {{this.lightestRowPct}}%; transform: translateY(-50%);">
+            {{this.selectedIllustrationName}}
+          </div>
+        {{/if}}
+      </button>
+      {{#if this.selectedIllustration.reasoning}}
+        <div class="text-center text mt-4 font-permanent-marker">
+          {{this.selectedIllustration.reasoning}}
+        </div>
+      {{/if}}
+    </div>
+  </template>
+}
+
+class AttendeeQuestions extends Component {
+  @tracked
+  selectedAttendee;
+
+  @tracked
+  selectedQuestion;
+
+  get attendees() {
+    const { recording } = this.args;
+    if (!recording) return [];
+
+    return recording.attendees;
+  }
+
+  @action
+  selectAttendee(attendee) {
+    this.selectedQuestion = null;
+    if (this.selectedAttendee === attendee) {
+      this.selectedAttendee = null;
+    } else {
+      this.selectedAttendee = attendee;
+    }
+  }
+
+  @action
+  selectQuestion(question) {
+    if (this.selectedQuestion === question) {
+      this.selectedQuestion = null;
+    } else {
+      this.selectedQuestion = question;
+    }
+  }
+
+  <template>
+    <div class="bg-white shadow" ...attributes>
+      <div class="px-4 py-5 h-full">
+        <div class="flex flex-col h-full space-y-4">
+          <h3 class="text-base font-semibold leading-6 text-gray-900">
+            Attendee Questions
+          </h3>
+
+          <div class="flex space-x-4">
+            {{#each this.attendees as |attendee|}}
+              <button
+                {{on "click" (fn this.selectAttendee attendee)}}
+              >
+                <span class="relative inline-block">
+                  <img
+                    class="
+                      h-24 w-24 rounded-md
+                      {{if (and this.selectedAttendee (not (eq this.selectedAttendee attendee))) "opacity-50"}}
+                    "
+                    src={{attendee.imageUrl}}
+                  >
+                  {{#if attendee.hasQuestions}}
+                    <span class="absolute right-0 top-0 block h-4 w-4 -translate-y-1/2 translate-x-1/2 transform rounded-full bg-green-400 ring-2 ring-white"></span>
+                  {{/if}}
+                </span>
+              </button>
+            {{/each}}
+          </div>
+
+          {{#if this.selectedAttendee}}
+            <div class="flex-1">
+              <div class="flex flex-col h-full space-y-2">
+                <div class="text-2xl font-semibold flex-none">
+                  {{this.selectedAttendee.name}}
+                </div>
+                {{#if this.selectedAttendee.hasQuestions}}
+                  <div class="flex-none max-h-1/3 overflow-y-auto">
+                    <div class="">
+                      <ul role="list" class="divide-y divide-gray-200">
+                        {{#each this.selectedAttendee.questions as |question|}}
+                          <li class="py-2">
+                            <button
+                              {{on "click" (fn this.selectQuestion question)}}
+                              class="block"
+                            >
+                              <div
+                                class="
+                                  flex items-center space-x-2
+                                  {{if (eq this.selectedQuestion question) "font-bold"}}
+                                "
+                              >
+                                <div>
+                                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
+                                  </svg>
+                                </div>
+
+                                <div>
+                                  {{question.name}}
+                                </div>
+                              </div>
+                            </button>
+                          </li>
+                        {{/each}}
+                      </ul>
+                    </div>
+                  </div>
+                  {{#if this.selectedQuestion}}
+                    <div class="flex-1">
+                      <div class="flex flex-col space-y-2">
+                        <div>
+                          <audio
+                            controls
+                            src={{this.selectedQuestion.audioUrl}}
+                          />
+                        </div>
+                        <div class="flex-1 overflow-y-auto text-lg font-bangers">
+                          {{this.selectedQuestion.question}}
+                        </div>
+                      </div>
+                    </div>
+                  {{/if}}
+                {{/if}}
+              </div>
+            </div>
+          {{/if}}
+        </div>
+      </div>
     </div>
   </template>
 }
@@ -95,32 +372,36 @@ class VocabularyFlashCards extends Component {
   }
 
   <template>
-    <div class="bg-white shadow">
-      <div class="px-4 py-5">
-        <h3 class="text-base font-semibold leading-6 text-gray-900">
-          {{#if this.term}}
-            {{this.term.term}}
-          {{else}}
-            Possibly New Vocabulary Term
-          {{/if}}
-        </h3>
-        <div class="mt-2 max-w-xl text-sm text-gray-500">
-          <p>
-            {{#if this.term.definition}}
-              {{this.term.definition}}
-            {{else}}
-              Any words that might be new to you will be defined here.
-            {{/if}}
-          </p>
-        </div>
-        <div class="mt-3 text-sm leading-6">
-          <button
-            class="font-semibold text-gray-900 hover:text-gray-500"
-            {{on "click" (perform this.setNextTask)}}
-          >
-            Go the the next
-            <span aria-hidden="true"> &rarr;</span>
-          </button>
+    <div class="bg-white shadow h-1/4" ...attributes>
+      <div class="px-4 py-5 h-full">
+        <div class="flex flex-col h-full">
+          <div class="flex-none">
+            <h3 class="text-base font-semibold leading-6">
+              {{#if this.term}}
+                {{this.term.term}}
+              {{else}}
+                New Vocabulary Terms
+              {{/if}}
+            </h3>
+          </div>
+          <div class="mt-2 max-w-xl text-sm text-gray-500 flex-1">
+            <p>
+              {{#if this.term.definition}}
+                {{this.term.definition}}
+              {{else}}
+                Any words that might be new to you will be defined here.
+              {{/if}}
+            </p>
+          </div>
+          <div class="mt-3 text-sm leading-6 flex-none">
+            <button
+              class="font-semibold hover:text-gray-500"
+              {{on "click" (perform this.setNextTask)}}
+            >
+              Go to the next term
+              <span aria-hidden="true"> &rarr;</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -129,15 +410,15 @@ class VocabularyFlashCards extends Component {
 
 class Summary extends Component {
   <template>
-    <div class="bg-white shadow overflow-y-auto" ...attributes id="summary">
+    <div class="bg-white shadow overflow-y-auto" ...attributes>
       <div class="px-4 py-5 ">
-        <div class="prose prose-sm">
+        <div class="prose">
+          <h3 class="text-base font-semibold leading-6 text-gray-900">
+            Live Summary
+          </h3>
           {{#if @recording.lastSummary.summary}}
             <Markdown @markdown={{@recording.lastSummary.summary}} />
           {{else}}
-            <h3 class="text-base font-semibold leading-6 text-gray-900">
-              Live Summary
-            </h3>
             <div class="mt-2 text-sm text-gray-500">
               <p>
                 A live summary of the speech will be written in Smart Brevity style (like Axios).
@@ -205,9 +486,9 @@ class PullQuote extends Component {
             {{on "click" (perform this.setNextPullQuoteTask)}}
           >
             {{#if this.pullQuote.quote}}
-              "{{this.pullQuote.quote}}"
+              “{{this.pullQuote.quote}}”
             {{else}}
-              "Most people underestimate what they can achieve in a day, while overestimating the wonders of a decade from now."
+              “Most people underestimate what they can achieve in a day, while overestimating the wonders of a decade from now.”
             {{/if}}
           </button>
           <div class="flex items-center">
@@ -326,6 +607,7 @@ export default class Session extends Component {
       {
         name: 'Julie Bowen',
         voiceName: 'en-US-Neural2-F',
+        imageUrl: '/images/julie-bowen.jpg',
         profile: `
 Julie Bowen (no relation to Matt and Trey Bowen of Superior Bowen) is a seasoned executive leader and financial professional based in the Kansas City Metropolitan Area. With a rich professional background, she possesses a unique combination of expertise in finance, accounting, auditing, and executive leadership, making her a versatile addition to any organization. Julie's robust academic foundation includes a Bachelor of Science in Business Administration, with concentrations in Accounting and Economics, and a Masters of Accountancy from Kansas State University. She's also a Certified Public Accountant (CPA) in both Kansas and Missouri and holds Series 66, 7, and 63 Securities Licenses.
 
@@ -340,6 +622,26 @@ Overall, Julie exhibits the qualities of an adaptable, resilient leader. She is 
 On the personal side, Julie is a married mom of 2 elementary school age boys. She wears baseball hats on the weekend, but no golf shirts. She's actually quite stylish but does not identify as such. She's fit, but her Peloton output could be much higher. She's a fun extrovert that everyone loves to be around. She's a determined learner that figures out new things through steady commitment and smarts. She's got "it" whether or not she thinks so.
 
 She's pretty practical and mostly focused on the financial here-and-now, but is up for conversation about just about anything regardless.
+        `.trim(),
+      },
+      {
+        name: 'Grant Wollenhaupt',
+        voiceName: 'en-US-Neural2-D',
+        imageUrl: '/images/grant-wollenhaupt.jpg',
+        profile: `
+Grant Wollenhaupt is a seasoned professional in the construction industry, currently serving as the Chief Customer Officer at XBE, a leading provider of operations management software to the horizontal construction industry. He has an extensive history working in various roles within the industry, demonstrating versatility and progressive growth in his career. Grant has a Bachelor of Arts degree focused in Political Science and Government, Constitutional Law, and Pre-Medicine from St. John's University.
+
+Before assuming his current role at XBE, Grant worked as the company's Chief Commercial Officer for nearly four years. Prior to this, he worked for Superior Bowen for six and a half years, holding the positions of Vice President of Strategy and Innovation and Director of Business Development. Grant has also been serving as the Director of Business Operations at R2R "Research to Roads" for almost 14 years.
+
+Grant's professional experience shows that he is a strong strategic thinker, as evidenced by his roles in strategy and business development at multiple organizations. His capacity to hold roles as both a Director of Business Development and Vice President of Strategy and Innovation suggests a creative and analytical mind, capable of recognizing business opportunities and driving growth.
+
+His long-standing tenure at various organizations shows loyalty and commitment, and his progression into leadership roles indicates ambition, competence, and a capacity to inspire and lead teams. His expertise in budgeting, engineering, strategic planning, business development, and team building reflects strong leadership qualities, including financial acumen, technical knowledge, forward-thinking, and team-oriented mindset.
+
+His educational background in Political Science, Government, Constitutional Law, and Pre-Medicine indicates a diverse set of interests and a potential knack for analytical thinking, problem-solving, and understanding complex systems. His transition from this diverse academic background into the construction industry could also suggest adaptability and a willingness to take on new challenges.
+
+Grant's recent shift from the Chief Commercial Officer role to the Chief Customer Officer position at XBE might point towards a customer-centric approach in his work ethic. This shift suggests a focus on understanding and meeting customer needs, a crucial aspect of maintaining and expanding business relations.
+
+On the personal side, Grant is a married father of 3 elementary school age kids. He loves tricked out trucks and old war memorabilia passed down from older generations in his family. He likes to lift weights, and cardio but only if its macho. He's funny but doesn't tell jokes. He's an outgoing extrovert that people like to be around, even when he tests limits. He cares!
         `.trim(),
       }
     ];
@@ -485,15 +787,23 @@ She's pretty practical and mostly focused on the financial here-and-now, but is 
           <div class="flex-1 h-full pr-4">
             <Summary @recording={{this.recording}} class="h-full" />
           </div>
-          <div class="flex-1"></div>
+          <div class="flex-1 h-full">
+            <div class="flex flex-col space-y-8 h-full">
+              <VocabularyFlashCards @recording={{this.recording}} class="flex-none" />
+
+              <AttendeeQuestions @recording={{this.recording}} class="flex-1" />
+            </div>
+          </div>
           <div class="flex-1 pl-4">
-            <VocabularyFlashCards @recording={{this.recording}} />
+            <div class="flex flex-col space-y-8">
+              <Illustrations @recording={{this.recording}} />
+            </div>
           </div>
         </div>
       </div>
 
       <div class="flex-none">
-        <div class="bg-green-500 h-4"></div>
+        <div class="bg-[#02AF7C] h-4"></div>
       </div>
     </div>
   </template>

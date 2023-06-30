@@ -23,6 +23,9 @@ export default class AttendeeQuestionModel extends Model {
   question;
 
   @attr('string')
+  name;
+
+  @attr('string')
   audioUrl;
 
   @task
@@ -36,7 +39,7 @@ export default class AttendeeQuestionModel extends Model {
       audioConfig: {
         audioEncoding: 'MP3',
         pitch: 0,
-        speakingRate: 1.25,
+        speakingRate: 1.2,
       },
       voice: {
         languageCode: 'en-US',

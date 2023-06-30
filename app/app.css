@@ -2,7 +2,3 @@
 @tailwind components;
 @tailwind utilities;
 
-.h-screen {
-  height: 100vh;
-  height: 100svh;
-}

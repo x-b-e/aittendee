@@ -59,8 +59,90 @@ export default class AttendeeModel extends Model {
   @hasMany('attendee-question', { async: false })
   questions;
 
+  get hasQuestions() {
+    return this.questions.length > 0;
+  }
+
   @attr('number', { defaultValue: 0 })
   cost;
+
+  @task
+  *nameQuestionTask(content) {
+    const messages = [];
+    const systemMessage = {
+      role: 'system',
+      content:
+        'You are an assistant that is labeling a question with a short name that is extremely specific to this particular question (since all questions will be somewhat similar).',
+    };
+    const userMessage = {
+      role: 'user',
+      content: `
+Here's my question:
+
+${content}
+      `.trim(),
+    };
+
+    messages.push(systemMessage);
+    messages.push(userMessage);
+
+    const functions = [];
+    const nameFunction = {
+      name: 'name',
+      description: 'Name the question very specifically.',
+      parameters: {
+        type: 'object',
+        properties: {
+          name: {
+            type: 'string',
+            description: 'A short 3 - 5 word very specific name for the question.',
+          },
+        },
+        required: ['name'],
+      },
+    };
+    functions.push(nameFunction);
+    const data = {
+      model: 'gpt-4-0613',
+      messages,
+      functions,
+      function_call: {
+        name: 'name',
+      },
+    };
+
+    let tries = 3;
+    while (tries > 0) {
+      try {
+        let response = yield fetch(
+          'https://api.openai.com/v1/chat/completions',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${ENV.OPENAI_API_KEY}`,
+            },
+            body: JSON.stringify(data),
+          });
+
+        if (!response.ok) {
+          throw new Error(
+            `HTTP Error Response: ${response.status} ${response.statusText}`
+          );
+        } else {
+          const json = yield response.json();
+          this.cost += calculateChatCost(json);
+          const functionArguments = JSON.parse(
+            json['choices'][0]['message']['function_call']['arguments']
+          );
+          return functionArguments['name'];
+        }
+      } catch (e) {
+        console.error(e);
+        tries--;
+      }
+    }
+  }
 
   @task
   *askQuestionTask(summary) {
@@ -75,6 +157,8 @@ export default class AttendeeModel extends Model {
       model: 'gpt-4',
       messages,
     };
+
+    let question;
 
     let tries = 3;
     while (tries > 0) {
@@ -97,7 +181,7 @@ export default class AttendeeModel extends Model {
           json = yield response.json();
           this.cost += calculateChatCost(json);
           const questionContent = json['choices'][0]['message']['content'];
-          const question = this.store.createRecord('attendee-question', {
+          question = this.store.createRecord('attendee-question', {
             attendee: this,
             question: questionContent,
           });
@@ -109,5 +193,8 @@ export default class AttendeeModel extends Model {
         }
       }
     }
+
+    const name = yield this.nameQuestionTask.perform(userMessage.content);
+    question.name = name;
   }
 }

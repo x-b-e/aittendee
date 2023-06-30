@@ -148,6 +148,25 @@ export default class RecordingModel extends Model {
     return result;
   }
 
+  get illustrations() {
+    const { illustrators } = this;
+    const result = [];
+    if (!illustrators) return result;
+
+    for (let illustrator of illustrators.toArray()) {
+      for (let illustration of illustrator.illustrations.toArray()) {
+        if (illustration.url) {
+          result.push(illustration);
+        }
+      }
+    }
+    result.sort((a, b) => {
+      return a.createdAt - b.createdAt;
+    });
+
+    return result;
+  }
+
   get chaptersWithSentimentEstimates() {
     return this.chapters.filter((chapter) => {
       return chapter.sentimentEstimates.length > 0;
@@ -304,7 +323,7 @@ export default class RecordingModel extends Model {
 
       const illustrator = this.store.createRecord('illustrator', {
         recording: this,
-        style: 'Sumi-e.',
+        style: 'Black and white polaroid picture',
         transcript,
       });
 

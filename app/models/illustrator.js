@@ -31,35 +31,51 @@ export default class IllustratorModel extends Model {
     const messages = [];
     const systemMessage = {
       role: 'system',
-      content: `You are an art director. You are creating a prompt for an illustrator to illustrate based on the following transcript. The prompt should be a short description of the illustration that you want the illustrator to create. The prompt should be written in a way that is easy for the illustrator to understand and follow. The image should be beautiful and intesting and abstract. The style should be ${this.style}. The illustration should include no words.`,
+      content: `
+        You are an art director.
+        You are creating a short 10 word prompt for an image based on following content provided by the user.
+        The prompt should be a short description of a naturalist image that you want the artist to create inspired by this content.
+        The prompt should not describe people.
+        The prompt should be written in a way that is easy for the artist to understand and follow.
+        The image should be a scene in the real world.
+        The illustration should include no words.
+        The style should be ${this.style} and the prompt must include the style.
+      `.trim(),
     };
     messages.push(systemMessage);
     const userMessage = {
       role: 'user',
-      content: `The transcript is as follows:
+      content: `The content is as follows:
 """
 ${this.transcript}
-"""`,
+"""
+
+Please create a prompt for the artist and explain your reasoning as an art director.
+`,
     };
     messages.push(userMessage);
 
     const functions = [];
     const promptFunction = {
       name: 'prompt',
-      description:
-        'Create a short 10 word prompt for an illustrator. Include the style and pleasing color pallette that matches the content.',
+      description: 'Create a prompt for the artist.',
       parameters: {
         type: 'object',
         properties: {
           prompt: {
             type: 'string',
-            description: `A short 10 word prompt for an illustrator. Include the style and pleasing color pallette that matches the content.`,
+            description: `The prompt for the artist.`,
           },
           name: {
             type: 'string',
-            description: `A one to three word poetic name for the illustration.`,
+            description: `A one to three word poetic name for the art.`,
+          },
+          reasoning: {
+            type: 'string',
+            description: `The reasoning for the prompt.`,
           },
         },
+        required: ['prompt', 'name', 'reasoning'],
       },
     };
     functions.push(promptFunction);
@@ -99,9 +115,11 @@ ${this.transcript}
           );
           const prompt = functionArguments['prompt'];
           const name = functionArguments['name'];
+          const reasoning = functionArguments['reasoning'];
           return {
             prompt,
             name,
+            reasoning,
           };
         }
       } catch (e) {
@@ -117,6 +135,7 @@ ${this.transcript}
       illustrator: this,
       name: prompt.name,
       prompt: prompt.prompt,
+      reasoning: prompt.reasoning,
     });
     yield illustration.createImageTask.perform();
   }
