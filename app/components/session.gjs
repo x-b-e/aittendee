@@ -782,7 +782,7 @@ On the personal side, Grant is a married father of 3 elementary school age kids.
         </div>
       </div>
 
-      <div class="flex-grow h-full p-4">
+      <div class="flex-1 h-full p-4 overflow-y-hidden">
         <div class="flex h-full">
           <div class="flex-1 h-full pr-4">
             <Summary @recording={{this.recording}} class="h-full" />
