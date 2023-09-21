@@ -44,18 +44,18 @@ function dollarWithPrecisionFormatter(precision = 2) {
 
 class TopBanner extends Component {
   <template>
-    <div class="text-center bg-gray-900 px-6 py-2.5">
+    <div class="text-center bg-[#57843D] px-6 py-2.5">
       <p class="text-sm leading-6 text-white">
         <a href="#">
-          <strong class="font-semibold">NAPA Midyear 2023</strong><svg viewBox="0 0 2 2" class="mx-2 inline h-0.5 w-0.5 fill-current" aria-hidden="true"><circle cx="1" cy="1" r="1" /></svg>
-          Kansas City
+          <strong class="font-semibold">EmberFest 2023</strong><svg viewBox="0 0 2 2" class="mx-2 inline h-0.5 w-0.5 fill-current" aria-hidden="true"><circle cx="1" cy="1" r="1" /></svg>
+          Madrid, Spain
         </a>
       </p>
     </div>
   </template>
 }
 
-function getLightestRow(imageData, padding) {
+function getDarkestRow(imageData, padding) {
   return new Promise((resolve, reject) => {
     let img = new Image();
     img.onload = function () {
@@ -125,15 +125,15 @@ class Illustrations extends Component {
   @tracked
   selectedIllustration;
 
-  get lightestRowPct() {
+  get darkestRowPct() {
     const { selectedIllustration } = this;
     if (!selectedIllustration) return null;
-    return selectedIllustration.lightestRowPct;
+    return selectedIllustration.darkestRowPct;
   }
 
   get selectedIllustrationUrl() {
     const { selectedIllustration } = this;
-    if (!selectedIllustration) return '/images/illustration-default.png';
+    if (!selectedIllustration) return null; //'/images/default-image-el-jardin-to-ember.png';
     return selectedIllustration.url;
   }
 
@@ -164,9 +164,9 @@ class Illustrations extends Component {
 
     if (!selectedIllustration) {
       if (illustrations.length === 0) {
-        this.selectedIllustration = {
-          url: '/images/illustration-default.png',
-        };
+        // this.selectedIllustration = {
+        //   url: '/images/default-image-el-jardin-to-ember.png',
+        // };
       } else {
         this.selectedIllustration = illustrations[0];
       }
@@ -188,8 +188,8 @@ class Illustrations extends Component {
         {{on "click" (perform this.setNextTask)}}
       >
         <img src={{this.selectedIllustrationUrl}} class="absolute inset-0" />
-        {{#if this.lightestRowPct}}
-          <div class="absolute inset-x-0 p-6 font-permanent-marker text-2xl text-center" style="top: {{this.lightestRowPct}}%; transform: translateY(-50%);">
+        {{#if this.darkestRowPct}}
+          <div class="absolute inset-x-0 p-6 font-permanent-marker text-2xl text-center text-white" style="top: {{this.darkestRowPct}}%; transform: translateY(-50%);">
             {{this.selectedIllustrationName}}
           </div>
         {{/if}}
@@ -240,7 +240,7 @@ class AttendeeQuestions extends Component {
     <div class="bg-white shadow" ...attributes>
       <div class="px-4 py-5 h-full">
         <div class="flex flex-col h-full space-y-4">
-          <h3 class="text-base font-semibold leading-6 text-gray-900">
+          <h3 class="text-base font-semibold leading-6">
             Attendee Questions
           </h3>
 
@@ -384,7 +384,7 @@ class VocabularyFlashCards extends Component {
               {{/if}}
             </h3>
           </div>
-          <div class="mt-2 max-w-xl text-sm text-gray-500 flex-1">
+          <div class="mt-2 max-w-xl text-sm flex-1">
             <p>
               {{#if this.term.definition}}
                 {{this.term.definition}}
@@ -395,7 +395,7 @@ class VocabularyFlashCards extends Component {
           </div>
           <div class="mt-3 text-sm leading-6 flex-none">
             <button
-              class="font-semibold hover:text-gray-500"
+              class="font-semibold"
               {{on "click" (perform this.setNextTask)}}
             >
               Go to the next term
@@ -413,13 +413,13 @@ class Summary extends Component {
     <div class="bg-white shadow overflow-y-auto" ...attributes>
       <div class="px-4 py-5 ">
         <div class="prose">
-          <h3 class="text-base font-semibold leading-6 text-gray-900">
+          <h3 class="text-base font-semibold leading-6">
             Live Summary
           </h3>
           {{#if @recording.lastSummary.summary}}
             <Markdown @markdown={{@recording.lastSummary.summary}} />
           {{else}}
-            <div class="mt-2 text-sm text-gray-500">
+            <div class="mt-2 text-sm">
               <p>
                 A live summary of the speech will be written in Smart Brevity style (like Axios).
               </p>
@@ -475,14 +475,14 @@ class PullQuote extends Component {
   }
 
   <template>
-    <div class="flex items-center">
+    <div class="flex items-center" ...attributes>
       <div class="flex-none">
-        <img src="/images/daft-napa.jpg" class="w-48 rounded-lg" />
+        <img src="/images/hieronymus-tomster.png" class="w-48 rounded-lg" />
       </div>
       <div class="flex-grow">
         <div class="flex flex-col space-y-4">
           <button
-            class="px-2 text-xl font-semibold leading-7 text-gray-900 text-left"
+            class="px-2 text-xl font-semibold leading-7 text-left"
             {{on "click" (perform this.setNextPullQuoteTask)}}
           >
             {{#if this.pullQuote.quote}}
@@ -493,10 +493,10 @@ class PullQuote extends Component {
           </button>
           <div class="flex items-center">
             <div class="flex-auto">
-              <div class="px-2 text-base font-semibold text-gray-900">
+              <div class="px-2 text-base font-semibold">
                 Sean Devine
               </div>
-              <div class="px-2 text-sm text-gray-500">
+              <div class="px-2 text-sm">
                 Founder &amp; CEO, XBE
               </div>
             </div>
@@ -526,13 +526,13 @@ class Stat extends Component {
   }
 
   <template>
-    <div class="bg-gray-900 py-6 px-8">
-      <p class="text-sm font-medium leading-6 text-gray-400">{{@label}}</p>
+    <div class="bg-[#88AED2] py-6 px-8">
+      <p class="text-sm font-medium leading-6 text-white">{{@label}}</p>
       <p class="mt-2 flex items-baseline gap-x-2">
         {{#if @value}}
           <span class="text-4xl font-semibold tracking-tight text-white">{{this.valueFormatter @value}}</span>
           {{#if @suffix}}
-            <span class="text-sm text-gray-400">{{@suffix}}</span>
+            <span class="text-sm text-white">{{@suffix}}</span>
           {{/if}}
         {{else}}
           <span class="text-4xl font-semibold tracking-tight text-white">
@@ -579,7 +579,7 @@ export default class Session extends Component {
     this.isOn = !this.isOn;
     if (this.isOn) {
       this.recording = this.store.createRecord('recording', {
-        audience: `The audience are executives attending the National Asphalt Pavement Association's mid-year meeting. They would tend to have a well rounded understanding of asphalt pavement and business topics, but would no relatively little about artificial intelligence and other emerging technologies. They are fairly sophisticated, so business jargon is well understood already.`
+        audience: `The audience are primarily programmers in town for EmberFest 2023. They're not necessarily art lovers, but they're interested in learning more one of the most famous paintings in the world that is at the Prado Museum in Madrid, Spain.`
       });
       this.vocabularyExtractor = this.store.createRecord('vocabulary-extractor', {
         recording: this.recording,
@@ -605,43 +605,52 @@ export default class Session extends Component {
     const { recording } = this;
     const attributesList = [
       {
-        name: 'Julie Bowen',
+        name: 'Isabella I of Castile',
         voiceName: 'en-US-Neural2-F',
-        imageUrl: '/images/julie-bowen.jpg',
+        imageUrl: '/images/Isabella-I-of-Castile.png',
         profile: `
-Julie Bowen (no relation to Matt and Trey Bowen of Superior Bowen) is a seasoned executive leader and financial professional based in the Kansas City Metropolitan Area. With a rich professional background, she possesses a unique combination of expertise in finance, accounting, auditing, and executive leadership, making her a versatile addition to any organization. Julie's robust academic foundation includes a Bachelor of Science in Business Administration, with concentrations in Accounting and Economics, and a Masters of Accountancy from Kansas State University. She's also a Certified Public Accountant (CPA) in both Kansas and Missouri and holds Series 66, 7, and 63 Securities Licenses.
+Biographical Details:
 
-Julie began her career in auditing as an Audit Senior Associate at KPMG, one of the Big Four accounting organizations. She then advanced into a role with Ferrell Capital, Inc., where she juggled three concurrent positions—Controller for Ferrell Capital, Chief Compliance Officer, and Investment Analyst for Samson Capital Management. In these roles, she showcased her ability to manage a diverse portfolio of responsibilities, from real estate management to the creation of robust compliance programs.
+- Born: April 22, 1451, in Madrigal de las Altas Torres, Castile
+- Died: November 26, 1504, in Medina del Campo, Castile
+- Titles: Queen of Castile and León (1474–1504)
+- Spouse: Ferdinand II of Aragon
+- Children: Among them, Catherine of Aragon and Joanna the Mad
+- Notable Achievements: Initiated the Spanish Inquisition, financed Columbus' voyage, unified Spain
 
-Following her tenure at Ferrell Capital, Inc., Julie assumed the role of Chief Financial Officer (CFO) at Tanner & White Properties, Inc. and its affiliated entities, including Woodside Health & Tennis Club. Here, she demonstrated her financial acumen in real estate development and operations, from securing financing for significant projects to implementing rigorous budgeting and forecasting processes.
+Personality Details:
 
-In recent years, Julie has served as CFO for Samson Dental Partners, Bright Tiger Dental, and currently Legacy Infrastructure Group. At Samson Dental Partners, she orchestrated a strategic business shutdown while transitioning to Bright Tiger Dental. As CEO of Bright Tiger Dental, she led a substantial organizational change that resulted in 55% revenue growth in 11 months. Currently, as CFO at Legacy Infrastructure Group (owner of Superior Bowen and Haskell Lemon), she continues to leverage her expertise to guide the company's financial and operational leadership.
+- Intelligent: Known for her intellect and curiosity, she valued education.
+- Pious: Deeply religious, initiated the Spanish Inquisition to purify Catholicism in her realm.
+- Strong-willed: Took the throne despite opposition, showed resilience in political dealings.
+- Diplomatic: Skilled in negotiation, formed alliances that benefited Spain.
+- Pragmatic: Understood the importance of maritime exploration for trade and influence.
 
-Overall, Julie exhibits the qualities of an adaptable, resilient leader. She is not only a problem solver but also an agent of change who thrives in dynamic, challenging environments. Her ability to construct and guide teams around common goals, coupled with her knack for building robust financial and operational structures, has consistently driven her organizations to success. She is known for her agility in the face of change, unwavering sense of urgency, and her commitment to the human side of business. She takes pride in building strong, committed teams and fostering workplace cultures where they can thrive.
-
-On the personal side, Julie is a married mom of 2 elementary school age boys. She wears baseball hats on the weekend, but no golf shirts. She's actually quite stylish but does not identify as such. She's fit, but her Peloton output could be much higher. She's a fun extrovert that everyone loves to be around. She's a determined learner that figures out new things through steady commitment and smarts. She's got "it" whether or not she thinks so.
-
-She's pretty practical and mostly focused on the financial here-and-now, but is up for conversation about just about anything regardless.
-        `.trim(),
+Isabella I of Castile was a crucial figure in the establishment of modern Spain and had a lasting impact on world history through her sponsorship of exploratory voyages.
+`.trim(),
       },
       {
-        name: 'Grant Wollenhaupt',
+        name: 'Leonardo da Vinci',
         voiceName: 'en-US-Neural2-D',
-        imageUrl: '/images/grant-wollenhaupt.jpg',
+        imageUrl: '/images/leonardo-da-vinci.png',
         profile: `
-Grant Wollenhaupt is a seasoned professional in the construction industry, currently serving as the Chief Customer Officer at XBE, a leading provider of operations management software to the horizontal construction industry. He has an extensive history working in various roles within the industry, demonstrating versatility and progressive growth in his career. Grant has a Bachelor of Arts degree focused in Political Science and Government, Constitutional Law, and Pre-Medicine from St. John's University.
+Biographical Details:
 
-Before assuming his current role at XBE, Grant worked as the company's Chief Commercial Officer for nearly four years. Prior to this, he worked for Superior Bowen for six and a half years, holding the positions of Vice President of Strategy and Innovation and Director of Business Development. Grant has also been serving as the Director of Business Operations at R2R "Research to Roads" for almost 14 years.
+- Born: April 15, 1452, in Vinci, Italy
+- Died: May 2, 1519, in Amboise, France
+- Occupations: Painter, inventor, scientist, writer, engineer
+- Notable Works: "Mona Lisa," "The Last Supper," various scientific journals
+- Patrons: Ludovico Sforza, Cesare Borgia, King Francis I of France
 
-Grant's professional experience shows that he is a strong strategic thinker, as evidenced by his roles in strategy and business development at multiple organizations. His capacity to hold roles as both a Director of Business Development and Vice President of Strategy and Innovation suggests a creative and analytical mind, capable of recognizing business opportunities and driving growth.
+Personality Details:
 
-His long-standing tenure at various organizations shows loyalty and commitment, and his progression into leadership roles indicates ambition, competence, and a capacity to inspire and lead teams. His expertise in budgeting, engineering, strategic planning, business development, and team building reflects strong leadership qualities, including financial acumen, technical knowledge, forward-thinking, and team-oriented mindset.
+- Curious: Had a wide range of interests, from anatomy to flight.
+- Observant: His artworks display a keen understanding of human emotion and natural phenomena.
+- Analytical: Employed scientific methods to both his art and inventions.
+- Introverted: Known to be private and selective about sharing his work.
+- Innovative: Often ahead of his time, he conceptualized inventions like the helicopter.
 
-His educational background in Political Science, Government, Constitutional Law, and Pre-Medicine indicates a diverse set of interests and a potential knack for analytical thinking, problem-solving, and understanding complex systems. His transition from this diverse academic background into the construction industry could also suggest adaptability and a willingness to take on new challenges.
-
-Grant's recent shift from the Chief Commercial Officer role to the Chief Customer Officer position at XBE might point towards a customer-centric approach in his work ethic. This shift suggests a focus on understanding and meeting customer needs, a crucial aspect of maintaining and expanding business relations.
-
-On the personal side, Grant is a married father of 3 elementary school age kids. He loves tricked out trucks and old war memorabilia passed down from older generations in his family. He likes to lift weights, and cardio but only if its macho. He's funny but doesn't tell jokes. He's an outgoing extrovert that people like to be around, even when he tests limits. He cares!
+Leonardo da Vinci was a polymath who made significant contributions to various fields, leaving a lasting impact on both art and science.
         `.trim(),
       }
     ];
@@ -689,16 +698,16 @@ On the personal side, Grant is a married father of 3 elementary school age kids.
         <TopBanner />
       </div>
 
-      <div class="flex-none">
+      <div class="flex-none text-[#4B2E16]">
         <div class="py-4 mx-auto flex items-center space-x-8">
           <div class="flex-grow px-8">
             <img src="/images/xbe-logo.png" class="w-24"/>
           </div>
           <div class="flex-none">
             <div class="flex items-center space-x-4">
-              <div class="font-bold text-5xl">AiSPHALT</div>
+              <div class="font-bold text-5xl">From El Jardín to Ember</div>
               <div class="font-thin text-4xl">
-                The Transformative Power of Artificial Intelligence on the Asphalt Paving Industry
+                The Aittendee Experience
               </div>
             </div>
           </div>
@@ -706,7 +715,7 @@ On the personal side, Grant is a married father of 3 elementary school age kids.
             <div class="flex">
               <div class="flex-grow"></div>
               <div class="flex-none">
-                <img src="/images/hey-napa-logo-hat-and-boots.png" class="w-8" />
+                <img src="/images/daft-tomster.png" class="w-20" />
               </div>
             </div>
           </div>
@@ -738,7 +747,7 @@ On the personal side, Grant is a married father of 3 elementary school age kids.
             </Stats>
           </div>
           <div class="">
-            <PullQuote @recording={{this.recording}}>
+            <PullQuote @recording={{this.recording}} class="text-[#4B2E16]">
               <:button>
                 <button
                   type="button" {{on "click" this.toggleIsOn}}
@@ -782,7 +791,7 @@ On the personal side, Grant is a married father of 3 elementary school age kids.
         </div>
       </div>
 
-      <div class="flex-grow h-full p-4">
+      <div class="flex-grow h-full p-4 text-[#4B2E16]">
         <div class="flex h-full">
           <div class="flex-1 h-full pr-4">
             <Summary @recording={{this.recording}} class="h-full" />

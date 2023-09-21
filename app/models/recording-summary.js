@@ -47,7 +47,7 @@ export default class RecordingSummaryModel extends Model {
 ${this.audience}
 """
 
-The summary should include a title formatted as an h3 and formatting and should be written in Markdown.
+The summary should be written in Markdown.
 `,
     };
     messages.push(systemMessage);

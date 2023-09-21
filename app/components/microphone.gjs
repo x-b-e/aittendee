@@ -197,7 +197,7 @@ She's pretty practical and mostly focused on the financial here-and-now, but is 
 
       {{#if this.randomPullQuote}}
         <div>
-          <blockquote class="text-center text-xl font-semibold leading-8 text-gray-900 sm:text-2xl sm:leading-9 max-w-prose mx-auto my-8">
+          <blockquote class="text-center text-xl font-semibold leading-8 sm:text-2xl sm:leading-9 max-w-prose mx-auto my-8">
             “{{this.randomPullQuote.quote}}”
           </blockquote>
         </div>
@@ -209,7 +209,7 @@ She's pretty practical and mostly focused on the financial here-and-now, but is 
             {{#if this.recording.lastSummary}}
               <Markdown @markdown={{this.recording.lastSummary.summary}} />
             {{else}}
-              <div class="text-lg text-gray-500">
+              <div class="text-lg">
                 Waiting to write summary.
               </div>
             {{/if}}

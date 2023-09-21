@@ -323,7 +323,8 @@ export default class RecordingModel extends Model {
 
       const illustrator = this.store.createRecord('illustrator', {
         recording: this,
-        style: 'Black and white polaroid picture',
+        style:
+          'Abstract oil painting inspired by the visual style of Hieronymus Bosch.',
         transcript,
       });
 

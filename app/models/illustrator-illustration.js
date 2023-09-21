@@ -25,7 +25,7 @@ function b64toBlob(b64Data, contentType = '', sliceSize = 512) {
   return blob;
 }
 
-function getLightestRow(imageData, padding) {
+function getDarkestRow(imageData, padding) {
   return new Promise((resolve, reject) => {
     let img = new Image();
     img.onload = function () {
@@ -37,8 +37,8 @@ function getLightestRow(imageData, padding) {
 
       ctx.drawImage(this, 0, 0, this.width, this.height);
 
-      let maxBrightness = 0;
-      let maxBrightnessRowIndex = padding;
+      let minBrightness = 0;
+      let minBrightnessRowIndex = padding;
 
       for (let y = padding; y < this.height - padding; y += 5) {
         let rowBrightness = 0;
@@ -57,14 +57,14 @@ function getLightestRow(imageData, padding) {
 
         let averageRowBrightness = rowBrightness / count;  // divide by the number of pixels checked
 
-        if (averageRowBrightness > maxBrightness) {
-          maxBrightness = averageRowBrightness;
-          maxBrightnessRowIndex = y;
+        if (averageRowBrightness < minBrightness) {
+          minBrightness = averageRowBrightness;
+          minBrightnessRowIndex = y;
         }
       }
 
       // Convert row index to percentage
-      let percentage = (maxBrightnessRowIndex / this.height) * 100;
+      let percentage = (minBrightnessRowIndex / this.height) * 100;
 
       resolve(percentage);
     };
@@ -97,16 +97,16 @@ export default class IllustratorIllustrationModel extends Model {
   base64;
 
   @attr('number')
-  lightestRowPct;
+  darkestRowPct;
 
   @task
-  *setLightestRowPctTask() {
+  *setDarkestRowPctTask() {
     const { url } = this;
     if (!url) return;
 
-    const lightestRowPct = yield getLightestRow(url, 50);
+    const darkestRowPct = yield getDarkestRow(url, 50);
 
-    this.lightestRowPct = lightestRowPct;
+    this.darkestRowPct = darkestRowPct;
   }
 
   get base64Data() {
@@ -159,7 +159,7 @@ export default class IllustratorIllustrationModel extends Model {
       const json = yield response.json();
       this.cost += COST_PER_IMAGE;
       this.base64 = json['data'][0]['b64_json'];
-      this.setLightestRowPctTask.perform();
+      this.setDarkestRowPctTask.perform();
     }
   }
 }
